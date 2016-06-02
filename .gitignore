@@ -49,3 +49,7 @@ fabric.properties
 db.sqlite3
 __pychache__
 *.pyc
+.idea/
+lists/__pycache__/
+lists/migrations/__pycache__/
+superlists/__pycache__/
