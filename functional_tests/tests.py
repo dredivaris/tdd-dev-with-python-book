@@ -13,7 +13,9 @@ class NewVisitorTest(LiveServerTestCase):
         self.browser.implicitly_wait(3)
 
     def tearDown(self):
-        self.browser.quit()
+        pass
+        # for some reason teardown automatically happens and explicit teardown results in error
+        # self.browser.quit()
 
     def check_for_row_in_list_table(self, row_text):
         table = self.browser.find_element_by_id('id_list_table')
