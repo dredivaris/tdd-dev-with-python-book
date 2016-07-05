@@ -1,9 +1,8 @@
-from fabric.contrib.files import append, exists, sed
+from fabric.contrib.files import append, exists, sed, settings, hide
 from fabric.api import env, local, run
 import random
 
 REPO_URL = 'https://github.com/dredivaris/tdd-dev-with-python-book.git'
-
 
 def deploy():
     site_folder = '/home/%s/sites/%s' % (env.user, env.host)
@@ -14,7 +13,9 @@ def deploy():
     _update_virtualenv(source_folder)
     _update_static_files(source_folder)
     _update_database(source_folder)
-
+    _create_virtual_host(source_folder, env.host)
+    _setup_upstart(source_folder, env.host)
+    start_services(env.host)
 
 def _create_directory_structure_if_necessary(site_folder):
     for subfolder in ('database', 'static', 'virtualenv', 'source'):
@@ -56,3 +57,26 @@ def _update_static_files(source_folder):
 
 def _update_database(source_folder):
     run('cd %s && ../virtualenv/bin/python3 manage.py migrate --noinput' % source_folder)
+
+
+def _create_virtual_host(source_folder, site_name):
+    run('''cd %s && sed "s/SITENAME/%s/g" deploy_tools/nginx.template.conf | sudo tee /etc/nginx/sites-available/%s''' %
+        (source_folder, site_name, site_name))
+    with settings(
+        hide('warnings'),
+        warn_only=True
+    ):
+        run('''sudo ln -s /etc/nginx/sites-available/%s /etc/nginx/sites-enabled/%s''' % (site_name, site_name))
+
+
+def _setup_upstart(source_folder, site_name):
+    run('''cd %s && sed "s/SITENAME/%s/g" deploy_tools/gunicorn-upstart.template.conf | sudo tee /etc/init/gunicorn-%s.conf''' % (source_folder, site_name, site_name))
+
+
+def start_services(site_name):
+    run('sudo service nginx reload')
+    with settings(
+        hide('warnings'),
+        warn_only=True
+    ):
+        run('sudo start gunicorn-%s' % site_name)
