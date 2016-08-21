@@ -4,6 +4,7 @@ from lists.models import Item
 
 EMPTY_LIST_ERROR = "You can't have an empty list item"
 
+
 class ItemForm(forms.models.ModelForm):
     class Meta:
         model = Item
